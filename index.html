@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="utility.css">
+    <link rel="shortcut icon" href="src/favicon.ico" type="image/x-icon">
+    <title>Spotify for Developers</title>
+</head>
+
+<body>
+
+
+    <div class="container flex">
+
+        <div class="left ">
+            <div class="home bg-grey rounded m-1 p-1">
+                <div class="close">
+                    <img src="src/close-square-svgrepo-com.svg" width="80px" alt="">
+                </div>
+                <img class="logo" src="src/logo.svg"  alt="MusicX"></img>
+                <ul>
+                    <li>
+                        <img class="Home-Icon-for-height" src="src/home.svg" alt="Home">Home
+                    </li>
+                    <li>
+                        <img class="Home-Icon-for-height" src="src/search.svg" alt="Search">Search
+                    </li>
+                </ul>
+            </div>
+
+
+            <div class="library bg-grey rounded m-1 p-1 ">
+                <div class="heading">
+                    <img src="src/playlist.svg" width="30px" alt="playlist" srcset="">
+                    <div>Your library</div>   
+                </div>
+
+                <div class="songList">
+                    <ul></ul>
+                </div>
+
+                <div class="library-footer">
+                    <div class="endCredit">
+                        Made With Brain By Nishant Dhanani!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+
+        <div class="right bg-grey rounded">
+            <div class="header">
+                <div class="nav">
+                    <div class="arrows flex">
+                        <div class="hamburger ">
+                            <img width="60px" src="src/hamburger-menu-svgrepo-com.svg" alt="">
+                        </div>
+                        <img src="src/left-arrow.svg" width="24px" alt="" srcset="">
+                        <img src="src/right-arrow.svg" width="24px" alt="" srcset="">
+                    </div>
+                </div>
+                <div class="buttons">
+                    <button class="signup">Sign Up</button>
+                    <button class="login">Log in</button>
+                </div>
+            </div>
+
+            <div class="spotify-playlist">
+                <h1 class="h2SpotifyPlaylist">Spotify Playlist</h1>
+
+
+                <div class="card-container">        
+                </div>
+                <div class="playbar invert">
+                    <div class="seekbar">
+                        <div class="circle">
+
+                        </div>
+                    </div>
+
+                    <div class="songInfo"></div>
+                    <div class="flex SecondPArtOfSongButtonTIme">
+
+                        <div class="songbuttons">
+                            <img id="pervious"  src="src/previous.svg" alt="Previous">
+                            <img id="play"  src="src/play-button-svgrepo-com.svg" alt="Play-Button">
+                            <img id="forward" width="45px" src="src/forward.svg" alt="Forward">
+                        </div>
+
+                        <div class="SongTime-volume">
+
+                            <div class="SongTime"></div>
+                            <div class="volume">
+                                <img  src="src/volume-max-svgrepo-com.svg" alt="">
+                                <div class="range">
+                                    <input type="range" class="volume-range" name="volume" id="volume-range">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,53 @@
+
+/* PRE MADE CLASSES.!!------------------------------------------------------------------------------------------- */
+.border{
+    border: 2px solid red;
+}
+.flex{
+    display: flex;
+}
+.justify-content{
+    justify-content: center;
+}
+.items-center{
+    align-items: center;
+}
+
+.bg-grey{
+    background-color: #121212;
+    
+}
+
+.rounded{
+    border-radius: 7px;
+}
+
+.m-1{
+margin: 5px;
+}
+
+.p-1{
+    padding: 10px;
+}
+
+.invert{
+    filter: invert(1);
+}
+
+
+/* For Webkit browsers (e.g., Chrome, Safari) */
+::-webkit-scrollbar {
+width: 12px;
+}
+::-webkit-scrollbar-thumb {
+background-color: #333; /* Dark color for the thumb */
+border-radius: 6px;
+}
+::-webkit-scrollbar-track {
+background-color: #222; /* Dark color for the track */
+}
+
+
+
+
+/* ------------------------------------------------------------------------------------------- */
