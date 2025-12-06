@@ -1,2 +1,2 @@
-/src/Songs/:album/   /src/Songs/:album/index.json   200
-/src/Songs/:album    /src/Songs/:album/index.json   200
+/src/Songs/:album/   /src/Songs/:album1/index.json   200
+/src/Songs/:album    /src/Songs/:album2/index.json   200
