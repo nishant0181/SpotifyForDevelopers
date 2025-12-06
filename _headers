@@ -1,7 +1,7 @@
 ﻿/src/Songs/*
   Access-Control-Allow-Origin: *
-  Access-Control-Allow-Methods: GET, HEAD
-  Access-Control-Allow-Headers: Range, Origin, Accept
+  Access-Control-Allow-Methods: GET, HEAD, OPTIONS
+  Access-Control-Allow-Headers: Origin, Range, Accept
   Accept-Ranges: bytes
   Cache-Control: public, max-age=31536000, immutable
 

@@ -1,2 +1,3 @@
-﻿/src/Songs/:album/   /src/Songs/:album/index.json   200
-/src/Songs/:album    /src/Songs/:album/index.json   200
+﻿# Rewrite album folder to its index.json
+/src/Songs/:album/    /src/Songs/:album/index.json    200
+/src/Songs/:album     /src/Songs/:album/index.json    200
