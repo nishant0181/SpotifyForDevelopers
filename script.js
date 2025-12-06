@@ -1,316 +1,258 @@
-let currentSong = new Audio()
-let songsList;
-let currntFolder;
+// script.js — Netlify-ready version
+// Rewritten to use JSON manifests instead of fetching folder listings.
+// Assumes:
+//  - /src/Songs/index.json  -> { "albums": ["Album1","Album2"] }
+//  - /src/Songs/<Album>/index.json -> { "title":"...", "description":"...", "cover":"cover.jpg", "tracks":[ "01 - a.mp3", ... ] }
 
+let currentSong = new Audio();
+let songsList = [];
+let currntFolder = "";
 
+// keep your original formatTime
 function formatTime(seconds) {
-
-    if (isNaN(seconds)) {
-        return "00:00";
-    }
-    seconds = Math.floor(seconds);  // remove decimal part
-
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  if (isNaN(seconds)) return "00:00";
+  seconds = Math.floor(seconds);
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${minutes}:${secs.toString().padStart(2, "0")}`;
 }
 
+// Fetch album list (top-level index.json). If missing, fallback to ["Album1"]
+async function fetchAlbumsIndex() {
+  try {
+    const res = await fetch("/src/Songs/index.json");
+    if (!res.ok) throw new Error("no index.json");
+    const json = await res.json();
+    if (Array.isArray(json.albums)) return json.albums;
+    // Support older shape: plain array
+    if (Array.isArray(json)) return json;
+    return Array.isArray(json.albums) ? json.albums : [];
+  } catch (err) {
+    console.warn("Could not fetch /src/Songs/index.json — falling back to [\"Album1\"]", err);
+    return ["Album1"];
+  }
+}
 
-
-
-
+// Fetch tracks for a particular album by reading its index.json
 async function getsongs(folder) {
-    currntFolder = folder
+  currntFolder = folder;
+  songsList = [];
 
-    let url = await `https://spotifyfordevelopers.pages.dev/src/Songs/${folder}/`;
-    let FetchSong = await fetch(url);
-    let response = await FetchSong.text();
+  try {
+    const res = await fetch(`/src/Songs/${encodeURIComponent(folder)}/index.json`);
+    if (!res.ok) throw new Error(`No index.json for ${folder} (${res.status})`);
+    const info = await res.json();
 
-    let SongStorediv = document.createElement('div')
-    SongStorediv.innerHTML = response
+    // Expect info.tracks to be an array of filenames (with .mp3)
+    songsList = Array.isArray(info.tracks) ? info.tracks.slice() : [];
 
-    let alinks = SongStorediv.getElementsByTagName('a')
-
-    songsList = [];
-
-    for (let index = 0; index < alinks.length; index++) {
-        const element = alinks[index];
-        if (element.href.endsWith(".mp3")) {
-            songsList.push(element.href.split(`%5C${folder}%5C`)[1].replaceAll(".mp3", ""))
-        }
-
-    }
-
-
-
-    let songUL = document.querySelector(".songList").getElementsByTagName("ul")[0]
-    songUL.innerHTML = ""
-
-    for (const song of songsList) {
-        songUL.innerHTML = songUL.innerHTML + `
-    
-    <li> 
-    <div class="flex frontpart">
-
-                                <img class="play-btminlist"  src="src/music-svgrepo-com.svg" alt="Music">
-                                <div class="info">
-                                <div>${song.replaceAll("%20", " ")}</div>
-                                </div> 
-                            </div>
-                            <span class="playnow">
-                                <img class="invert play-btminlist" src="src/play-button-svgrepo-com.svg"  alt="Play" >
-                            </span>
-                        </li> `;
-    }
-
-    Array.from(document.querySelector(".songList").getElementsByTagName("li")).forEach((e) => {
-        e.addEventListener('click', (element) => {
-
-            playMusic(e.querySelector(".info").getElementsByTagName('div')[0].innerHTML);
-        })
-
-
-    });
-
-
-
-
-
-
-
-
-
-
-
+    updateSongListUI(songsList);
     return songsList;
+  } catch (err) {
+    console.error("getsongs error:", err);
+    updateSongListUI([]);
+    return [];
+  }
 }
 
+// Update song list DOM
+function updateSongListUI(list) {
+  const songUL = document.querySelector(".songList ul");
+  if (!songUL) return;
+  songUL.innerHTML = "";
 
+  for (const song of list) {
+    const displayName = song.replace(/\.mp3$/i, "").replaceAll("%20", " ");
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <div class="flex frontpart">
+        <img class="play-btminlist" src="src/music-svgrepo-com.svg" alt="Music">
+        <div class="info"><div>${displayName}</div></div>
+      </div>
+      <span class="playnow">
+        <img class="invert play-btminlist" src="src/play-button-svgrepo-com.svg" alt="Play">
+      </span>
+    `;
+    li.addEventListener("click", () => playMusic(song));
+    songUL.appendChild(li);
+  }
+}
 
-function playMusic(track, pause = false) {
-    currentSong.src = `https://spotifyfordevelopers.pages.dev/src/Songs/${currntFolder}/${track}.mp3`
+// Play a given track filename (must be the exact filename as in index.json)
+async function playMusic(track, pause = false) {
+  if (!track || !currntFolder) return;
 
+  // Build Netlify-relative path (no external domain required)
+  const src = `/src/Songs/${encodeURIComponent(currntFolder)}/${encodeURIComponent(track)}`;
 
+  currentSong.src = src;
 
-    if (!pause) {
-        currentSong.play();
-        play.src = "src/pause.svg"
+  if (!pause) {
+    try {
+      await currentSong.play();
+      // update play button if element exists
+      const playBtn = document.getElementById("play");
+      if (playBtn) playBtn.src = "src/pause.svg";
+    } catch (err) {
+      console.warn("play() blocked or failed:", err);
     }
+  }
 
-    document.querySelector(".songInfo").innerHTML = decodeURI(track)
-    document.querySelector(".SongTime").innerHTML = "00:00 / 00:00"
+  const songInfoEl = document.querySelector(".songInfo");
+  if (songInfoEl) songInfoEl.innerHTML = decodeURIComponent(track.replace(/\.mp3$/i, ""));
+
+  const timeEl = document.querySelector(".SongTime");
+  if (timeEl) timeEl.innerHTML = "00:00 / 00:00";
 }
 
-
-
-
-
-
+// Display album cards by reading src/Songs/index.json and each album's index.json
 async function displayAlbums() {
+  const albums = await fetchAlbumsIndex();
+  const CardContainer = document.querySelector(".card-container");
+  if (!CardContainer) return;
+  CardContainer.innerHTML = "";
 
-    let url = await `https://spotifyfordevelopers.pages.dev/src/Songs/`;
-    let FetchSong = await fetch(url);
-    let response = await FetchSong.text();
+  for (const folder of albums) {
+    try {
+      const infoRes = await fetch(`/src/Songs/${encodeURIComponent(folder)}/index.json`);
+      if (!infoRes.ok) {
+        console.warn(`No index.json for album ${folder}`);
+        continue;
+      }
+      const info = await infoRes.json();
+      const cover = info.cover ? `/src/Songs/${encodeURIComponent(folder)}/${encodeURIComponent(info.cover)}` : `src/default-cover.jpg`;
 
-    let SongStorediv = document.createElement('div')
-    SongStorediv.innerHTML = response
-    let anchors = SongStorediv.getElementsByTagName("a")
-
-
-
-    let array = (anchors) 
-    for (let index = 0; index < array.length; index++) {
-        const e = array[index];
-        
-    
-
-        if (e.href.includes("%5CSongs%5C")) {
-            let folder = (e.href.split("%5C").slice(-1)[0].replace("/", ""));
-            let url = `https://spotifyfordevelopers.pages.dev/src/Songs/${folder}/info.json`;
-            let FetchSong = await fetch(url);
-            let response = await FetchSong.json();
-            let CardContainer = document.querySelector(".card-container");
-            CardContainer.innerHTML = CardContainer.innerHTML + `
-            
-                                <div data-folder="${folder}" class="card">
-                         <div class="play"> 
-                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path d="M5 20V4L19 12L5 20Z" stroke="#141B34" fill="#000" stroke-width="1.5"
-                                    stroke-linejoin="round" />
-                            </svg> 
-                         </div> 
-                         <div class="imgforbradius">
-
-                              <img class="rounded" src="https://spotifyfordevelopers.pages.dev/src/Songs/${folder}/cover.jpg/" alt=""> 
-                             <div>
-                        </div>
-
-                            <h3>${response.title}</h3>
-                            <p>${response.description}</p>
-                            </div>
-                    </div>
-
-            `
-        }
-        
-    Array.from(document.getElementsByClassName("card")).forEach(element => {
-
-        element.addEventListener("click", async e => {
-            console.log(e.currentTarget.dataset.folder);
-            songsList = await getsongs(e.currentTarget.dataset.folder);
-
-            playMusic(songsList[0], true);
-
-        })
-
-    });
-
-
-
+      CardContainer.insertAdjacentHTML(
+        "beforeend",
+        `
+        <div data-folder="${folder}" class="card">
+          <div class="play"> 
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 20V4L19 12L5 20Z" stroke="#141B34" fill="#000" stroke-width="1.5"
+                    stroke-linejoin="round" />
+            </svg> 
+          </div> 
+          <div class="imgforbradius">
+            <img class="rounded" src="${cover}" alt="${info.title || folder}">
+            <h3>${info.title || folder}</h3>
+            <p>${info.description || ""}</p>
+          </div>
+        </div>
+      `
+      );
+    } catch (err) {
+      console.error("displayAlbums error for", folder, err);
     }
+  }
 
-
-
-
-
-
-
+  // attach click handlers after cards are added
+  Array.from(document.getElementsByClassName("card")).forEach((element) => {
+    element.addEventListener("click", async (e) => {
+      const folder = element.dataset.folder;
+      songsList = await getsongs(folder);
+      if (songsList && songsList.length) playMusic(songsList[0], true);
+    });
+  });
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+// main orchestration
 async function main() {
+  // try to load albums and first album
+  await displayAlbums();
 
-    await getsongs("Album1")
-    playMusic(songsList[0], true);
+  // load the first album (if any)
+  const albums = await fetchAlbumsIndex();
+  if (albums.length) {
+    await getsongs(albums[0]);
+    if (songsList.length) playMusic(songsList[0], true);
+  }
 
-    displayAlbums();
+  // wire up play button if it exists
+  const playEl = document.getElementById("play");
+  if (playEl) {
+    playEl.addEventListener("click", () => {
+      if (currentSong.paused) {
+        currentSong.play().catch((e) => console.warn("play blocked:", e));
+        playEl.src = "src/pause.svg";
+      } else {
+        currentSong.pause();
+        playEl.src = "src/play-button-svgrepo-com.svg";
+      }
+    });
+  }
 
-    play.addEventListener(('click'), () => {
+  // forward / previous handlers (safe-guard if elements exist)
+  const forward = document.getElementById("forward");
+  const pervious = document.getElementById("pervious");
 
-        if (currentSong.paused) {
-            currentSong.play();
-            play.src = "src/pause.svg"
-
-        }
-        else {
-            currentSong.pause();
-            play.src = "src/play-button-svgrepo-com.svg"
-        }
-
-    })
-
-
-
+  if (forward) {
     forward.addEventListener("click", () => {
-        currentSong.pause()
-        console.log(songsList);
-        let index = songsList.indexOf(currentSong.src.split(`https://spotifyfordevelopers.pages.dev/src/Songs/${currntFolder}/`)[1].replaceAll(".mp3", ""));
-        if ((index + 1) < songsList.length) {
-            console.log(songsList[index + 1]);
+      currentSong.pause();
+      const cur = decodeURIComponent(currentSong.src.split(`/src/Songs/${currntFolder}/`)[1] || "");
+      const index = songsList.indexOf(cur.replace(/\.mp3$/, ""));
+      if (index >= 0 && index + 1 < songsList.length) {
+        playMusic(songsList[index + 1]);
+      }
+    });
+  }
 
-            playMusic(songsList[index + 1])
-
-        }
-    })
-
-
+  if (pervious) {
     pervious.addEventListener("click", () => {
-        currentSong.pause()
+      currentSong.pause();
+      const cur = decodeURIComponent(currentSong.src.split(`/src/Songs/${currntFolder}/`)[1] || "");
+      const index = songsList.indexOf(cur.replace(/\.mp3$/, ""));
+      if (index > 0) playMusic(songsList[index - 1]);
+    });
+  }
 
-        let index = songsList.indexOf(currentSong.src.split(`https://spotifyfordevelopers.pages.dev/src/Songs/${currntFolder}/`)[1].replaceAll(".mp3", ""));
-        console.log(index);
+  // update time UI
+  currentSong.addEventListener("timeupdate", () => {
+    const duration = currentSong.duration || 0;
+    document.querySelector(".SongTime").innerHTML = `${formatTime(currentSong.currentTime)}/${formatTime(duration)}`;
+    const circle = document.querySelector(".circle");
+    if (circle && duration) circle.style.left = (currentSong.currentTime / duration) * 100 + "%";
+  });
 
-        if ((index - 1) >= 0) {
-            playMusic(songsList[index - 1])
-        }
+  // seekbar
+  const seekbar = document.querySelector(".seekbar");
+  if (seekbar) {
+    seekbar.addEventListener("click", (e) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const percent = (e.clientX - rect.left) / rect.width;
+      const duration = currentSong.duration || 0;
+      currentSong.currentTime = duration * percent;
+      const circle = document.querySelector(".circle");
+      if (circle) circle.style.left = percent * 100 + "%";
+    });
+  }
 
+  // hamburger / close UI
+  const hamburger = document.querySelector(".hamburger");
+  const leftPanel = document.querySelector(".left");
+  if (hamburger && leftPanel) hamburger.addEventListener("click", () => (leftPanel.style.left = "0%"));
+  const closeBtn = document.querySelector(".close");
+  if (closeBtn && leftPanel) closeBtn.addEventListener("click", () => (leftPanel.style.left = "-100%"));
 
-    })
+  // volume
+  const volRange = document.querySelector(".volume-range");
+  if (volRange) volRange.addEventListener("change", (e) => (currentSong.volume = parseInt(e.target.value) / 100));
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    currentSong.addEventListener("timeupdate", () => {
-
-        document.querySelector('.SongTime').innerHTML = `${formatTime(currentSong.currentTime)}/${formatTime(currentSong.duration)}`
-        document.querySelector(".circle").style.left = (currentSong.currentTime / currentSong.duration) * 100 + "%"
-    })
-
-    document.querySelector(".seekbar").addEventListener('click', (e) => {
-        let percent = (e.offsetX / e.target.getBoundingClientRect().width) * 100;
-        document.querySelector(".circle").style.left = percent + "%";
-        currentSong.currentTime = (currentSong.duration * percent) / 100;
-
-    })
-
-    document.querySelector(".hamburger").addEventListener("click", () => {
-        document.querySelector(".left").style.left = "0%"
-    })
-
-    document.querySelector(".close").addEventListener("click", () => {
-        document.querySelector(".left").style.left = "-100%"
-
-    })
-
-
-    document.querySelector(".volume-range").addEventListener(("change"), (e) => {
-
-        currentSong.volume = parseInt(e.target.value) / 100
-
-
-    })
-    
-    document.querySelector(".volume>img").addEventListener(("click"),e=>{
-        if(e.target.src.includes("volume-max-svgrepo-com.svg")){
-            
-            console.log(e.target.src);
-            e.target.src = e.target.src.replace("volume-max-svgrepo-com.svg","mute.svg");
-            currentSong.volume = 0; 
-                document.querySelector(".volume-range").value = 0;
-                
-            }
-        else{
-            e.target.src = e.target.src.replace("mute.svg","volume-max-svgrepo-com.svg");
-            
-            currentSong.volume = 0.1;
-            document.querySelector(".volume-range").value = 10;
-
-        }
-        
-    })
-
-
-
-
-
-
-
+  const volImg = document.querySelector(".volume>img");
+  if (volImg) {
+    volImg.addEventListener("click", (e) => {
+      const src = e.target.src || "";
+      if (src.includes("volume-max-svgrepo-com.svg")) {
+        e.target.src = src.replace("volume-max-svgrepo-com.svg", "mute.svg");
+        currentSong.volume = 0;
+        if (volRange) volRange.value = 0;
+      } else {
+        e.target.src = src.replace("mute.svg", "volume-max-svgrepo-com.svg");
+        currentSong.volume = 0.1;
+        if (volRange) volRange.value = 10;
+      }
+    });
+  }
 }
-
 
 main();
-
