@@ -23,7 +23,7 @@ function formatTime(seconds) {
 async function getsongs(folder) {
     currntFolder = folder
 
-    let url = await `/src/Songs/${folder}/`;
+    let url = await `https://spotifyfordevelopers.pages.dev/src/Songs/${folder}/`;
     let FetchSong = await fetch(url);
     let response = await FetchSong.text();
 
@@ -89,7 +89,7 @@ async function getsongs(folder) {
 
 
 function playMusic(track, pause = false) {
-    currentSong.src = `src/Songs/${currntFolder}/${track}.mp3`
+    currentSong.src = `https://spotifyfordevelopers.pages.dev/src/Songs/${currntFolder}/${track}.mp3`
 
 
 
@@ -109,7 +109,7 @@ function playMusic(track, pause = false) {
 
 async function displayAlbums() {
 
-    let url = await `/src/Songs/`;
+    let url = await `https://spotifyfordevelopers.pages.dev/src/Songs/`;
     let FetchSong = await fetch(url);
     let response = await FetchSong.text();
 
@@ -127,7 +127,7 @@ async function displayAlbums() {
 
         if (e.href.includes("%5CSongs%5C")) {
             let folder = (e.href.split("%5C").slice(-1)[0].replace("/", ""));
-            let url = `/src/Songs/${folder}/info.json`;
+            let url = `https://spotifyfordevelopers.pages.dev/src/Songs/${folder}/info.json`;
             let FetchSong = await fetch(url);
             let response = await FetchSong.json();
             let CardContainer = document.querySelector(".card-container");
@@ -143,7 +143,7 @@ async function displayAlbums() {
                          </div> 
                          <div class="imgforbradius">
 
-                              <img class="rounded" src="src/Songs/${folder}/cover.jpg/" alt=""> 
+                              <img class="rounded" src="https://spotifyfordevelopers.pages.dev/src/Songs/${folder}/cover.jpg/" alt=""> 
                              <div>
                         </div>
 
@@ -218,7 +218,7 @@ async function main() {
     forward.addEventListener("click", () => {
         currentSong.pause()
         console.log(songsList);
-        let index = songsList.indexOf(currentSong.src.split(`/src/Songs/${currntFolder}/`)[1].replaceAll(".mp3", ""));
+        let index = songsList.indexOf(currentSong.src.split(`https://spotifyfordevelopers.pages.dev/src/Songs/${currntFolder}/`)[1].replaceAll(".mp3", ""));
         if ((index + 1) < songsList.length) {
             console.log(songsList[index + 1]);
 
@@ -231,7 +231,7 @@ async function main() {
     pervious.addEventListener("click", () => {
         currentSong.pause()
 
-        let index = songsList.indexOf(currentSong.src.split(`/src/Songs/${currntFolder}/`)[1].replaceAll(".mp3", ""));
+        let index = songsList.indexOf(currentSong.src.split(`https://spotifyfordevelopers.pages.dev/src/Songs/${currntFolder}/`)[1].replaceAll(".mp3", ""));
         console.log(index);
 
         if ((index - 1) >= 0) {

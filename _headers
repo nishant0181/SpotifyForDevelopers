@@ -1,0 +1,9 @@
+/src/Songs/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, HEAD
+  Access-Control-Allow-Headers: Range, Origin, Accept
+  Accept-Ranges: bytes
+  Cache-Control: public, max-age=31536000, immutable
+
+/src/Songs/*/*.mp3
+  Content-Type: audio/mpeg
